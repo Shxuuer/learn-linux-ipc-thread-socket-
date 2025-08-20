@@ -6,5 +6,6 @@ add_subdirectory(process)
 add_subdirectory(ipc)
 add_subdirectory(mmap)
 add_subdirectory(socket)
-
 add_subdirectory(master_http_server)
+
+add_subdirectory(alsa)
