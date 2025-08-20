@@ -1,4 +1,4 @@
-add_executable(alsa_test main.c)
+add_executable(alsa_loop main.c)
 
 find_package(ALSA COMPONENTS asound REQUIRED)
-target_link_libraries(alsa_test PRIVATE ${ALSA_LIBRARIES})
+target_link_libraries(alsa_loop PRIVATE ${ALSA_LIBRARIES})
