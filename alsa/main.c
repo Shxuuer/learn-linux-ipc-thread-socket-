@@ -10,7 +10,7 @@
 // exit flag for signal handling
 volatile sig_atomic_t exit_flag = 0;
 // frames per period
-static int frames = 4410;
+static int frames = 2205;
 
 // buffer structure
 typedef struct
@@ -48,7 +48,7 @@ int create_handle(snd_pcm_t **handle, const char *pcm_name, snd_pcm_stream_t str
                            2,     // 通道数
                            44100, // 采样率
                            1,     // 是否允许软件调整
-                           10000) // 延迟（微秒）
+                           5000)  // 延迟（微秒）
         < 0)
     {
         perror("");
@@ -76,7 +76,7 @@ void *record_thread(void *arg)
         int real_rec_frames = 0;
         if ((real_rec_frames = snd_pcm_readi(pcm_capture_handle, start_ptr, frames)) < 0)
         {
-            snd_pcm_recover(pcm_capture_handle, -EPIPE, 0);
+            snd_pcm_recover(pcm_capture_handle, real_rec_frames, 0);
             perror("");
         }
 
@@ -114,7 +114,7 @@ void *play_thread(void *arg)
         int real_play_frames = 0;
         if ((real_play_frames = snd_pcm_writei(pcm_play_handle, start_ptr, frames)) < 0)
         {
-            snd_pcm_recover(pcm_play_handle, -EPIPE, 0);
+            snd_pcm_recover(pcm_play_handle, real_play_frames, 0);
             fprintf(stderr, "Error writing to PCM device: %s\n", snd_strerror(errno));
         }
 
