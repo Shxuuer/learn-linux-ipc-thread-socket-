@@ -53,7 +53,7 @@ int main()
     }
 
     // 就绪的事件列表
-    struct epoll_event events[10];
+    struct epoll_event events[1000];
 
     while (is_running)
     {
@@ -72,7 +72,7 @@ int main()
                 while ((connection_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_len)) >= 0)
                 {
                     set_non_blocking(connection_fd);
-                    printf("Accepted connection from %s:%d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+                    // printf("Accepted connection from %s:%d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 
                     // 将新连接添加到epoll中
                     event.events = EPOLLIN | EPOLLET; // 边缘触发
@@ -83,13 +83,13 @@ int main()
                         close(connection_fd);
                         continue;
                     }
-                    printf("Added fd %d to epoll\n", connection_fd);
+                    // printf("Added fd %d to epoll\n", connection_fd);
                 }
             }
             else
             {
                 // 处理HTTP请求
-                printf("Handling request on fd %d\n", events[i].data.fd);
+                // printf("Handling request on fd %d\n", events[i].data.fd);
                 handle_http_request(events[i].data.fd);
                 // 从epoll中删除连接
                 if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, NULL) < 0)
@@ -97,7 +97,7 @@ int main()
                     perror("epoll_ctl del");
                 }
                 close(events[i].data.fd);
-                printf("Closed connection on fd %d\n", events[i].data.fd);
+                // printf("Closed connection on fd %d\n", events[i].data.fd);
             }
         }
     }

@@ -48,7 +48,7 @@ void handle_http_request(int connection_fd)
     char *url = get_http_req_url(buffer);
     if (url)
     {
-        printf("Received URL: %s\n", url);
+        // printf("Received URL: %s\n", url);
         char *file_content = read_file_content(url);
         char *response;
         if (file_content)

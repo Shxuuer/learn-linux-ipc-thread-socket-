@@ -41,7 +41,7 @@ char *make_http_response(const char *content, const http_code_t code, const http
 
 void handle_http_request(int connection_fd)
 {
-    printf("Client connected\n");
+    // printf("Client connected\n");
     char buffer[1024 * 8] = {0};
     ssize_t bytes_received = recv(connection_fd, buffer, sizeof(buffer) - 1, 0);
     buffer[bytes_received] = '\0'; // 确保字符串结束
@@ -49,7 +49,7 @@ void handle_http_request(int connection_fd)
     char *url = get_http_req_url(buffer);
     if (url)
     {
-        printf("Received URL: %s\n", url);
+        // printf("Received URL: %s\n", url);
         char *file_content = read_file_content(url);
         char *response;
         if (file_content)

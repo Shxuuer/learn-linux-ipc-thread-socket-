@@ -21,10 +21,10 @@ int main()
 
     // 初始化任务队列，容量为30
     task_queue_t tkq;
-    init_tkq(&tkq, 10);
+    init_tkq(&tkq, 10000);
     // 初始化线程池，线程数量为10
     thread_pool_t pool;
-    if (init_thread_pool(&pool, 10, &tkq) != 0)
+    if (init_thread_pool(&pool, 5000, &tkq) != 0)
     {
         fprintf(stderr, "Failed to initialize thread pool\n");
         return 1;
