@@ -5,6 +5,7 @@
 #include <sys/poll.h>
 #include <linux/types.h>
 #include <unistd.h>
+#include <errno.h>
 
 int main(int argc, char *argv[])
 {
@@ -17,8 +18,18 @@ int main(int argc, char *argv[])
     struct pollfd pfd[1];
     pfd[0].events = POLLIN;
     pfd[0].fd = socket(AF_NETLINK, SOCK_DGRAM, NETLINK_KOBJECT_UEVENT);
+    if (pfd[0].fd < 0)
+    {
+        perror("need superuser priviledge");
+        return -1;
+    }
 
-    bind(pfd[0].fd, (struct sockaddr *)&addr, sizeof(addr));
+    if (bind(pfd[0].fd, (struct sockaddr *)&addr, sizeof(addr)))
+    {
+        perror("bind failed");
+        return -1;
+    }
+
     char buffer[1024];
     while (-1 != poll(pfd, 1, -1))
     {
