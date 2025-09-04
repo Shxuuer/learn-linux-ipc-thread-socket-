@@ -5,6 +5,7 @@
 #include <linux/uaccess.h>
 #include <linux/ioctl.h>
 #include <linux/slab.h>
+#include <linux/mutex.h>
 
 // 定义模块的元信息
 MODULE_LICENSE("GPL");
@@ -24,6 +25,7 @@ static char *shdmem;
 
 // 字符设备结构体
 struct cdev shdmem_cdev;
+struct mutex shdmem_mutex;
 struct class *shdmem_class;
 
 // 设备号（主设备号[12]:次设备号[20]）
@@ -92,6 +94,9 @@ static int __init shdmem_init(void)
         goto fail;
     }
 
+    // 初始化互斥锁
+    mutex_init(&shdmem_mutex);
+
     // 创建成功
     printk(KERN_INFO "shdmem module loaded, major: %d, minor: %d\n", MAJOR(shdmem_devno), MINOR(shdmem_devno));
     return 0;
@@ -159,11 +164,13 @@ static ssize_t shdmem_read(struct file *filep, char __user *buf, size_t count, l
     if (*ppos + size > MEM_SIZE)
         size = MEM_SIZE - *ppos;
     // 复制数据到用户空间
+    mutex_lock(&shdmem_mutex);
     if (copy_to_user(buf, shdmem + *ppos, size))
     {
         ret = -EFAULT;
         goto fail;
     }
+    mutex_unlock(&shdmem_mutex);
 
     *ppos += size;
     printk(KERN_INFO "shdmem read %d bytes from %lld\n", size, *ppos - size);
@@ -192,11 +199,13 @@ static ssize_t shdmem_write(struct file *filep, const char __user *buf, size_t c
     if (*ppos + size > MEM_SIZE)
         size = MEM_SIZE - *ppos;
     // 复制数据到内核空间
+    mutex_lock(&shdmem_mutex);
     if (copy_from_user(shdmem + *ppos, buf, size))
     {
         ret = -EFAULT;
         goto fail;
     }
+    mutex_unlock(&shdmem_mutex);
 
     *ppos += size;
     printk(KERN_INFO "shdmem write %d bytes from %lld\n", size, *ppos - size);
@@ -241,7 +250,9 @@ static long shdmem_ioctl(struct file *filep, unsigned int cmd, unsigned long arg
     switch (cmd)
     {
     case SHDMEM_CLEAR:
+        mutex_lock(&shdmem_mutex);
         memset(shdmem, 0, MEM_SIZE);
+        mutex_unlock(&shdmem_mutex);
         printk(KERN_INFO "shdmem cleared\n");
         break;
     }
