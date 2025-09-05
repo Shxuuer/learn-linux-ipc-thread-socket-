@@ -3,6 +3,7 @@ project(MyLearningProjects C CXX)
 
 add_subdirectory(thread)
 add_subdirectory(process)
+add_subdirectory(signal)
 add_subdirectory(ipc)
 add_subdirectory(mmap)
 add_subdirectory(socket)
