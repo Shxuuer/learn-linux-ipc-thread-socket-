@@ -1,4 +1,5 @@
 obj-m := shdmem.o
+obj-m += fifo.o
 
 KDIR := /lib/modules/$(shell uname -r)/build
 
