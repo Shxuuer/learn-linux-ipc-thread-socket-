@@ -6,6 +6,7 @@
 #include <linux/slab.h>
 #include <linux/wait.h>
 #include <linux/mutex.h>
+#include <linux/poll.h>
 
 MODULE_AUTHOR("shxuuer");
 MODULE_LICENSE("GPL");
@@ -31,6 +32,7 @@ static int fifo_open(struct inode *, struct file *);
 static int fifo_release(struct inode *, struct file *);
 static ssize_t fifo_read(struct file *filep, char __user *buf, size_t count, loff_t *ppos);
 static ssize_t fifo_write(struct file *filep, const char __user *buf, size_t count, loff_t *ppos);
+__poll_t fifo_poll(struct file *filep, struct poll_table_struct *pt);
 
 static struct file_operations fifo_fops = {
     .owner = THIS_MODULE,
@@ -38,6 +40,7 @@ static struct file_operations fifo_fops = {
     .release = fifo_release,
     .read = fifo_read,
     .write = fifo_write,
+    .poll = fifo_poll,
 };
 
 module_init(fifo_init);
@@ -207,4 +210,21 @@ out_with_unlock:
 out:
     finish_wait(&write_queue, &wait);
     return ret;
+}
+
+__poll_t fifo_poll(struct file *filep, struct poll_table_struct *pt)
+{
+    __poll_t mask = 0;
+
+    mutex_lock(&fifo_mutex);
+    poll_wait(filep, &read_queue, pt);
+    poll_wait(filep, &write_queue, pt);
+
+    if (length > 0)
+        mask |= POLLIN | POLLRDNORM; // 可读
+    if (length < BUFFER_SIZE)
+        mask |= POLLOUT | POLLWRNORM; // 可写
+
+    mutex_unlock(&fifo_mutex);
+    return mask;
 }
