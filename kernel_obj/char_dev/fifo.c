@@ -25,6 +25,7 @@ static wait_queue_head_t read_queue;
 static wait_queue_head_t write_queue;
 static char *fifo_buffer;
 static int length = 0;
+static struct fasync_struct *fifo_fasync_struct;
 
 static int __init fifo_init(void);
 static void __exit fifo_exit(void);
@@ -33,6 +34,7 @@ static int fifo_release(struct inode *, struct file *);
 static ssize_t fifo_read(struct file *filep, char __user *buf, size_t count, loff_t *ppos);
 static ssize_t fifo_write(struct file *filep, const char __user *buf, size_t count, loff_t *ppos);
 __poll_t fifo_poll(struct file *filep, struct poll_table_struct *pt);
+int fifo_fasync(int fd, struct file *filep, int mode);
 
 static struct file_operations fifo_fops = {
     .owner = THIS_MODULE,
@@ -41,6 +43,7 @@ static struct file_operations fifo_fops = {
     .read = fifo_read,
     .write = fifo_write,
     .poll = fifo_poll,
+    .fasync = fifo_fasync,
 };
 
 module_init(fifo_init);
@@ -109,6 +112,7 @@ static int fifo_open(struct inode *inode, struct file *filep)
 
 static int fifo_release(struct inode *inode, struct file *filep)
 {
+    fifo_fasync(-1, filep, 0);
     return 0;
 }
 
@@ -205,6 +209,10 @@ static ssize_t fifo_write(struct file *filep, const char __user *buf, size_t cou
     length += size;
     ret = size;
     wake_up_interruptible(&read_queue);
+
+    if (fifo_fasync_struct)
+        kill_fasync(&fifo_fasync_struct, SIGIO, POLL_IN);
+
 out_with_unlock:
     mutex_unlock(&fifo_mutex);
 out:
@@ -227,4 +235,9 @@ __poll_t fifo_poll(struct file *filep, struct poll_table_struct *pt)
 
     mutex_unlock(&fifo_mutex);
     return mask;
+}
+
+int fifo_fasync(int fd, struct file *filep, int mode)
+{
+    return fasync_helper(fd, filep, mode, &fifo_fasync_struct);
 }
